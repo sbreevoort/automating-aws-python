@@ -1,1 +1,1 @@
-# automating-aws-python
+# Automating AWS with Python

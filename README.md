@@ -11,3 +11,4 @@ Current features are:
 - List buckets
 - List objects in a bucket
 - Create and setup bucket
+- Sync a folder to bucket

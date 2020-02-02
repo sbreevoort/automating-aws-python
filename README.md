@@ -12,3 +12,4 @@ Current features are:
 - List objects in a bucket
 - Create and setup bucket
 - Sync a folder to bucket
+- Select profilename with --profile=<profilename>

@@ -49,6 +49,7 @@ def setup_bucket(bucketname):
 def sync(pathname, bucketname):
     """Sync contents of [pathname] to bucket"""
     bucket_manager.sync(pathname, bucketname)
+    print(bucket_manager.get_bucket_url(bucket_manager.s3.Bucket(bucketname)))
 
 
 if __name__ == '__main__':

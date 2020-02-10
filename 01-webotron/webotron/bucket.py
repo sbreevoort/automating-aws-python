@@ -1,7 +1,12 @@
 """ Class for S3 buckets"""
 import mimetypes
+import boto3
+from functools import reduce
 from botocore.exceptions import ClientError
 from pathlib import Path
+from pprint import pprint
+from hashlib import md5
+
 
 import util
 
@@ -9,10 +14,17 @@ import util
 class BucketManager:
     """Manage S3"""
 
+    CHUNK_SIZE = 8388608
+
     def __init__(self, session):
         """Create a BucketManager object"""
         self.session = session
         self.s3 = self.session.resource('s3')
+        self.transfer_config = boto3.s3.transfer.TransferConfig(
+            multipart_chunksize = self.CHUNK_SIZE,
+            multipart_threshold = self.CHUNK_SIZE
+        )
+        self.manifest = {}
 
     def get_region_name(self, s3_bucket):
         """Get region name of s3_bucket"""
@@ -82,20 +94,63 @@ class BucketManager:
             }
         })
 
+    def load_manifest(self, s3_bucket):
+        """Load mainfest"""
+        paginator = self.s3.meta.client.get_paginator('list_objects_v2')
+        for page in paginator.paginate(Bucket=s3_bucket.name):
+            for obj in page.get('Contents', []):
+                self.manifest[obj['Key']] = obj['ETag']
+                #pprint(obj)
+
+
+    @staticmethod
+    def hash_data(data):
+        """Generate md5 hash for data"""
+        hash = md5()
+        hash.update(data)
+        return hash
+
+    def generate_etag(self, filename):
+        """Generate Etag for file"""
+        hashes = []
+        with open(filename, 'rb') as f:
+            while True:
+                data = f.read(self.CHUNK_SIZE)
+                if not data:
+                    break
+                hashes.append(self. hash_data(data))
+
+        if not hashes:  # emptyfile
+            return
+        elif len(hashes)==1:   # 1 chunk
+            return '"{}"'.format(hashes[0].hexdigest())
+        else:    # meerdere hashes, die ook weer gehasht worden
+            hash = self.hash_data(reduce(lambda x,y: x+y, (h.digest for h in hashes) ))
+            return '"{}-{}"'.format(hash.hexdigest(), len(hashes))
+
+
     def upload_file(self, s3_bucket, path, key):
         """Upload file to S3"""
         content_type = mimetypes.guess_type(key)[0] or 'text/plain'
+
+        etag = self.generate_etag(path)
+        if self.manifest.get(key, '') == etag:   # bestand is niet gewijzigd
+            print("Skipping {}, etags match".format(key))
+            return
+
         print('Contenttype: {}'.format(content_type))
         return s3_bucket.upload_file(
             path,
             key,
             ExtraArgs={
                 'ContentType': content_type
-            }
+            },
+            Config=self.transfer_config
         )
 
     def sync(self, pathname, bucketname):
         s3_bucket = self.s3.Bucket(bucketname)
+        self.load_manifest(s3_bucket)
 
         root = Path(pathname).resolve()
 

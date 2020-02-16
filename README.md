@@ -13,3 +13,11 @@ Current features are:
 - Create and setup bucket
 - Sync a folder to bucket
 - Select profilename with --profile=<profilename>
+
+## 02-notifon
+
+Notifon is a project to notify users on Slack of changes on your AWS account
+
+### Features
+
+Current features are:

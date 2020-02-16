@@ -1,8 +1,9 @@
-"""Webotron automates deploying a static website to AWS S3
+"""
+Webotron automates deploying a static website to AWS S3
 """
 import boto3
 import click
-from bucket import BucketManager
+from webotron.bucket import BucketManager
 
 session = None
 bucket_manager = None

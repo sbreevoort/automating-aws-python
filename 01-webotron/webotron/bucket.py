@@ -8,7 +8,7 @@ from pprint import pprint
 from hashlib import md5
 
 
-import util
+from webotron import util
 
 
 class BucketManager:

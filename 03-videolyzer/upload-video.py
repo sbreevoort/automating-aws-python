@@ -21,5 +21,6 @@ def upload_video(profile, pathname, bucketname):
         path = Path(pathname).expanduser().resolve()
         bucket.upload_file(str(path), str(path.name))
 
+
 if __name__ == '__main__':
     upload_video()
